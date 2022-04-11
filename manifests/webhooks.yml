@@ -1,0 +1,55 @@
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingWebhookConfiguration
+metadata:
+  name: deployment-validation
+webhooks:
+  - name: "deployment-validation.production.svc"
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: In
+          values: [ "production" ]
+    rules:
+      - operations: [ "CREATE" ]
+        apiGroups: [ "apps" ]
+        apiVersions: [ "v1" ]
+        resources: [ "deployments" ]
+        scope: "Namespaced"
+    clientConfig:
+      service:
+        namespace: production
+        name: webhook-server
+        path: "/validate"
+      caBundle: ${ENCODED_CA}
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    timeoutSeconds: 5
+
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: deployment-mutation
+webhooks:
+  - name: "deployment-mutation.production.svc"
+    namespaceSelector:
+      matchExpressions:
+        - key: kubernetes.io/metadata.name
+          operator: In
+          values: [ "production" ]
+    rules:
+      - operations: [ "CREATE" ]
+        apiGroups: [ "apps" ]
+        apiVersions: [ "v1" ]
+        resources: [ "deployments" ]
+        scope: "Namespaced"
+    clientConfig:
+      service:
+        namespace: production
+        name: webhook-server
+        path: "/mutate"
+      caBundle: ${ENCODED_CA}
+    admissionReviewVersions: ["v1"]
+    sideEffects: None
+    timeoutSeconds: 5
